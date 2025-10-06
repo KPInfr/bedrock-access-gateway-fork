@@ -327,6 +327,13 @@ class BedrockAgents(BedrockModel):
                 'agentAliasId': model['alias_id'],
                 'sessionId': session_id,
                 'inputText': query,
+                'idleSessionTTLInSeconds': 5400,
+                'memoryConfiguration': {
+                    'enabledMemoryTypes': [
+                        'SESSION_SUMMARY',
+                    ],
+                    'storageDays': 30
+                }
             }
 
             # Append KB config if present
