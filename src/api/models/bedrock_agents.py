@@ -58,6 +58,7 @@ bedrock_agent_runtime = boto3.client(
 
 
 class BedrockAgents(BedrockModel):
+    __updated_memory = False
 
     def __init__(self):
         """Append agents to model list."""
@@ -277,6 +278,20 @@ class BedrockAgents(BedrockModel):
 
         # return an [DONE] message at the end.
         yield self.stream_response_to_bytes()
+
+    def _update_memory_settings(self):
+        if not BedrockAgents.__updated_memory:
+            bedrock_agent.update_agent(
+                idleSessionTTLInSeconds = 5400,
+                memoryConfiguration = {
+                    'enabledMemoryTypes': [
+                        'SESSION_SUMMARY'
+                    ],
+                    'storageDays': 30
+                }
+            )
+
+            BedrockAgents.__updated_memory = True
     
     def _invoke_agent(self, chat_request: ChatRequest, stream=False):
         """Common logic for invoke agent """
@@ -291,6 +306,9 @@ class BedrockAgents(BedrockModel):
             logger.info("Bedrock request: " + json.dumps(str(args)))
 
         model = self._model_manager.get_all_models()[chat_request.model]
+
+        # Update memory settings
+        self._update_memory_settings()
         
         ################
 
@@ -327,13 +345,6 @@ class BedrockAgents(BedrockModel):
                 'agentAliasId': model['alias_id'],
                 'sessionId': session_id,
                 'inputText': query,
-                'idleSessionTTLInSeconds': 5400,
-                'memoryConfiguration': {
-                    'enabledMemoryTypes': [
-                        'SESSION_SUMMARY',
-                    ],
-                    'storageDays': 30
-                }
             }
 
             # Append KB config if present
