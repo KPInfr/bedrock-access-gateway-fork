@@ -279,9 +279,16 @@ class BedrockAgents(BedrockModel):
         # return an [DONE] message at the end.
         yield self.stream_response_to_bytes()
 
-    def _update_memory_settings(self):
+    def _update_memory_settings(self, model):
         if not BedrockAgents.__updated_memory:
+            agent_id = model['agent_id']
+            response = bedrock_agent.get_agent(agentId=agent_id)['agent']
+
             bedrock_agent.update_agent(
+                agentId = agent_id,
+                agentName = response['agentName'],
+                agentResourceRoleArn = response['agentResourceRoleArn'],
+                foundationModel = response['foundationModel'],
                 idleSessionTTLInSeconds = 5400,
                 memoryConfiguration = {
                     'enabledMemoryTypes': [
@@ -308,7 +315,7 @@ class BedrockAgents(BedrockModel):
         model = self._model_manager.get_all_models()[chat_request.model]
 
         # Update memory settings
-        self._update_memory_settings()
+        self._update_memory_settings(model)
         
         ################
 
